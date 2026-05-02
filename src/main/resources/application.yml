@@ -23,6 +23,12 @@ spring:
     # Uses KAFKA_URL from .env or defaults to localhost:9092
     bootstrap-servers: ${KAFKA_URL:localhost:9092}
 
+
+app:
+  jwtSecret: ${JWT_SECRET:your_at_least_32_character_long_secret_key_here}
+  jwtExpirationMs: ${JWT_EXPIRATION:86400000}
+
+
 # Extra security config for your JWT logic later
 jwt:
   secret: ${JWT_SECRET:a_long_random_default_secret_for_local_dev}
