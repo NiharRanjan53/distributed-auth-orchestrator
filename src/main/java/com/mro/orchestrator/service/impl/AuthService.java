@@ -7,6 +7,7 @@ import com.mro.orchestrator.models.User;
 import com.mro.orchestrator.repositories.UserRepository;
 import com.mro.orchestrator.service.IAuthService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Service;
 public class AuthService implements IAuthService {
 
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     public AuthResponseDTO registerUser(RegisterRequestDTO request) {
@@ -30,7 +32,7 @@ public class AuthService implements IAuthService {
         User user = User.builder()
                 .username(request.getUsername())
                 .email(request.getEmail())
-                .password(request.getPassword()) // Still need to hash this!
+                .password(passwordEncoder.encode(request.getPassword()))     // ENCODE the password
                 .roles(request.getRoles())
                 .build();
 
