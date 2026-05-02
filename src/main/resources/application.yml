@@ -3,16 +3,16 @@ spring:
     name: distributed-auth-orchestrator
 
   datasource:
-    # Replace 'mro_db' with your actual database name
-    url: jdbc:postgresql://localhost:5432/mro_db
-    username: postgres
-    # Replace with your actual Postgres password
-    password: your_password
+    # Uses DB_URL from .env or defaults to mro_db
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/mro_db}
+    # Uses DB_USERNAME from .env or defaults to postgres
+    username: ${DB_USERNAME:postgres}
+    # Uses DB_PASSWORD from .env
+    password: ${DB_PASSWORD:your_fallback_password}
     driver-class-name: org.postgresql.Driver
 
   jpa:
     hibernate:
-      # 'update' automatically creates tables based on your Java entities
       ddl-auto: update
     show-sql: true
     properties:
@@ -20,4 +20,9 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
 
   kafka:
-    bootstrap-servers: localhost:9092
+    # Uses KAFKA_URL from .env or defaults to localhost:9092
+    bootstrap-servers: ${KAFKA_URL:localhost:9092}
+
+# Extra security config for your JWT logic later
+jwt:
+  secret: ${JWT_SECRET:a_long_random_default_secret_for_local_dev}
