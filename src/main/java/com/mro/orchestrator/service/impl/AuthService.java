@@ -7,9 +7,11 @@ import com.mro.orchestrator.exception.UserAlreadyExistsException;
 import com.mro.orchestrator.models.User;
 import com.mro.orchestrator.repositories.UserRepository;
 import com.mro.orchestrator.service.IAuthService;
+import com.mro.orchestrator.security.JwtUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
 
 
 @Service
@@ -18,6 +20,7 @@ public class AuthService implements IAuthService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtUtils jwtUtils;
 
     @Override
     public AuthResponseDTO registerUser(RegisterRequestDTO request) {
@@ -63,9 +66,13 @@ public class AuthService implements IAuthService {
             throw new UserAlreadyExistsException("Invalid Username or Password");
         }
 
-        // 3. Map to Response (We will add the JWT token here in the next step)
+        // 3. GENERATE THE TOKEN
+        String token = jwtUtils.generateToken(user.getUsername());
+
+        // 4. Map to Response (We will add the JWT token here in the next step)
         return AuthResponseDTO.builder()
                 .message("Login successful")
+                .token(token)
                 .id(user.getId())
                 .username(user.getUsername())
                 .email(user.getEmail())

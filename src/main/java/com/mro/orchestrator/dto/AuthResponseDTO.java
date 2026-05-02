@@ -11,6 +11,7 @@ import java.util.Set;
 @NoArgsConstructor
 public class AuthResponseDTO {
     private String message;
+    private String token;
     private Long id;
     private String username;
     private String email;
