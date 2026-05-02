@@ -1,6 +1,7 @@
 package com.mro.orchestrator.service.impl;
 
 import com.mro.orchestrator.dto.AuthResponseDTO;
+import com.mro.orchestrator.dto.LoginRequestDTO;
 import com.mro.orchestrator.dto.RegisterRequestDTO;
 import com.mro.orchestrator.exception.UserAlreadyExistsException;
 import com.mro.orchestrator.models.User;
@@ -50,4 +51,26 @@ public class AuthService implements IAuthService {
                 .build();
 
     }
+
+    @Override
+    public AuthResponseDTO loginUser(LoginRequestDTO request) {
+        // 1. Find the user
+        User user = userRepository.findByUsername(request.getUsername())
+                .orElseThrow(() -> new UserAlreadyExistsException("Invalid Username or Password"));
+
+        // 2. Verify the password
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            throw new UserAlreadyExistsException("Invalid Username or Password");
+        }
+
+        // 3. Map to Response (We will add the JWT token here in the next step)
+        return AuthResponseDTO.builder()
+                .message("Login successful")
+                .id(user.getId())
+                .username(user.getUsername())
+                .email(user.getEmail())
+                .roles(user.getRoles())
+                .build();
+    }
+
 }

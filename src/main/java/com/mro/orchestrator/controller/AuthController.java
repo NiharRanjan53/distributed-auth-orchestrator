@@ -1,6 +1,7 @@
 package com.mro.orchestrator.controller;
 
 import com.mro.orchestrator.dto.AuthResponseDTO;
+import com.mro.orchestrator.dto.LoginRequestDTO;
 import com.mro.orchestrator.dto.RegisterRequestDTO;
 import com.mro.orchestrator.service.IAuthService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -29,6 +30,14 @@ public class AuthController {
     public ResponseEntity<AuthResponseDTO> register(@Valid @RequestBody RegisterRequestDTO request) {
         AuthResponseDTO response = authService.registerUser(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+
+    @PostMapping("/login")
+    @Operation(summary = "Login user", description = "Authenticates user and returns details")
+    public ResponseEntity<AuthResponseDTO> login(@Valid @RequestBody LoginRequestDTO request) {
+        AuthResponseDTO response = authService.loginUser(request);
+        return ResponseEntity.ok(response);
     }
 
 
