@@ -1,16 +1,22 @@
 package com.mro.orchestrator.service;
 
+import com.mro.orchestrator.config.KafkaConfig;
 import com.mro.orchestrator.dto.FileUploadResponseDTO;
+import com.mro.orchestrator.events.RawDocumentIngestedEvent;
 import com.mro.orchestrator.models.DocumentJob;
 import com.mro.orchestrator.models.DocumentMetadata;
+import com.mro.orchestrator.producers.KafkaEventProducer;
 import com.mro.orchestrator.repositories.DocumentJobRepository;
 import com.mro.orchestrator.validation.ValidationEngine;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -22,29 +28,27 @@ public class DocumentUploadService {
     private final S3Service s3Service;
     private final DocumentJobRepository documentRepository;
     private final ValidationEngine validationEngine;
-    // private final KafkaTemplate<String, Object> kafkaTemplate;
+    private final KafkaTemplate<String, Object> kafkaTemplate;
+    private final KafkaEventProducer kafkaEventProducer;
 
     @Transactional
     public FileUploadResponseDTO handleUpload(List<MultipartFile> files, Long userId) {
-        DocumentJob job = Objects.requireNonNull(
-                documentRepository.save(
-                        DocumentJob.builder()
-                                .userId(userId)
-                                .status("INGESTION_STARTED")
-                                .build()),
-                "Failed to create ingestion job");
+        // 1. CRITICAL: Validate BEFORE saving anything to the DB or S3
+        validationEngine.runAll(files);
+
+        // 2. Create the initial Job record
+        DocumentJob job = documentRepository.save(
+                DocumentJob.builder()
+                        .userId(userId)
+                        .status("INGESTION_STARTED")
+                        .files(new ArrayList<>()) // Ensure list is initialized
+                        .build());
 
         String jobId = job.getJobId();
         log.info("Starting ingestion job: {} for user: {}", jobId, userId);
-        System.out.println("==========================");
-
-        // 1. Logic Preserved: Run the Validation Engine (Decoupled logic)
-        validationEngine.runAll(files);
 
         try {
-            // 2. Optimized & Safe S3 Upload
-            // Logic Change: We use .map() instead of .forEach() to ensure thread-safety
-            // when collecting S3 paths in a parallelStream.
+            // 3. Parallel S3 Upload (Thread-safe mapping)
             List<String> s3Paths = files.parallelStream()
                     .map(file -> {
                         String s3Key = String.format("mro/%s/%s", jobId, file.getOriginalFilename());
@@ -52,8 +56,7 @@ public class DocumentUploadService {
                     })
                     .collect(Collectors.toList());
 
-            // 3. Database Persistence Logic (New Industry Standard)
-            // We update the existing parent Job and attach metadata records.
+            // 4. Update Job and Attach Metadata
             job.setStatus("RAW_INGESTED");
 
             for (int i = 0; i < files.size(); i++) {
@@ -62,23 +65,43 @@ public class DocumentUploadService {
                         .fileName(file.getOriginalFilename())
                         .s3Url(s3Paths.get(i))
                         .fileType(file.getContentType())
-                        .documentJob(job) // Link child to parent
+                        .documentJob(job)
                         .build();
-                job.getFiles().add(metadata); // Link parent to child
+                job.getFiles().add(metadata);
             }
 
             documentRepository.save(job);
 
-            // 4. Logic Preserved: Kafka Event Preparation (publish step still disabled)
-            // kafkaTemplate.send("raw-document-ingested", jobId, eventPayload);
-            log.info("Ingestion event prepared for job: {} with {} files", jobId, files.size());
+            // 5. Multi-Topic Kafka Integration
+            RawDocumentIngestedEvent ingestionEvent = RawDocumentIngestedEvent.builder()
+                    .jobId(jobId)
+                    .userId(userId)
+                    .filePaths(s3Paths)
+                    .fileCount(files.size())
+                    .status("UPLOADED")
+                    .timestamp(LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME))
+                    .build();
 
-            // 5. Updated Return Type (DTO instead of Map)
-            return new FileUploadResponseDTO(jobId, s3Paths, "Upload successful");
+            // Send to Ingestion Topic
+            kafkaEventProducer.publishrawDocumentIngestedEvent(ingestionEvent);
+
+            // Send to Audit Topic (Optional but recommended)
+            kafkaTemplate.send(KafkaConfig.AUDIT_TOPIC, jobId, Map.of(
+                    "action", "UPLOAD_SUCCESS",
+                    "userId", userId,
+                    "jobId", jobId
+            ));
+
+            log.info("Ingestion events produced for job: {}", jobId);
+
+            // 6. Return Structured DTO
+            return new FileUploadResponseDTO(jobId, s3Paths, "MRO documents uploaded successfully.");
 
         } catch (Exception e) {
             log.error("Critical failure in job {}: {}", jobId, e.getMessage());
-            throw new RuntimeException("Upload failed due to internal service error");
+            // Transactional will roll back the Database, but S3 files remain.
+            // will trigger an S3 cleanup here.
+            throw new RuntimeException("Upload failed: " + e.getMessage());
         }
     }
 }
