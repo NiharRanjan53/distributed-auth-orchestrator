@@ -1,6 +1,7 @@
 package com.mro.orchestrator.exception;
 
 import com.mro.orchestrator.dto.ErrorResponseDTO;
+import com.mro.orchestrator.dto.FileValidationErrorResponseDTO;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -9,6 +10,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.time.LocalDateTime;
+import java.util.Map;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -43,6 +45,17 @@ public class GlobalExceptionHandler {
         ErrorResponseDTO error = new ErrorResponseDTO(
                 HttpStatus.BAD_REQUEST.value(),
                 "Duplicate Resource",
+                ex.getMessage(),
+                LocalDateTime.now()
+        );
+        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(FileValidationException.class)
+    public ResponseEntity<FileValidationErrorResponseDTO> handleFileValidation(FileValidationException ex) {
+        FileValidationErrorResponseDTO error = new FileValidationErrorResponseDTO(
+                HttpStatus.BAD_REQUEST.value(),
+                "File Validation Failed",
                 ex.getMessage(),
                 LocalDateTime.now()
         );

@@ -12,8 +12,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-
-
 @Service
 @RequiredArgsConstructor
 public class AuthService implements IAuthService {
@@ -36,7 +34,7 @@ public class AuthService implements IAuthService {
         User user = User.builder()
                 .username(request.getUsername())
                 .email(request.getEmail())
-                .password(passwordEncoder.encode(request.getPassword()))     // ENCODE the password
+                .password(passwordEncoder.encode(request.getPassword())) // ENCODE the password
                 .roles(request.getRoles())
                 .build();
 
