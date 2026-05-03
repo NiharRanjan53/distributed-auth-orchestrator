@@ -13,6 +13,8 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.util.stream.Collectors;
+
 @Configuration
 @RequiredArgsConstructor
 public class ApplicationConfig {
@@ -36,8 +38,8 @@ public class ApplicationConfig {
                     .password(user.getPassword())
                     .authorities(
                             user.getRoles().stream()
-                                    .map(role -> new SimpleGrantedAuthority(role.name()))
-                                    .toList())
+                                    .map(role -> new SimpleGrantedAuthority("ROLE_" + role.name()))
+                                    .collect(Collectors.toList()))
                     .build();
         };
     }
