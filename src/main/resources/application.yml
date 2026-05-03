@@ -32,3 +32,11 @@ app:
 # Extra security config for your JWT logic later
 jwt:
   secret: ${JWT_SECRET:a_long_random_default_secret_for_local_dev}
+
+
+aws:
+  access-key: ${AWS_ACCESS_KEY_ID}
+  secret-key: ${AWS_SECRET_ACCESS_KEY}
+  region: ${AWS_REGION:ap-south-1}
+  s3:
+    bucket-name: ${S3_BUCKET:mro-orchestrator-documents}
