@@ -20,9 +20,10 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
 
   kafka:
-    # Uses KAFKA_URL from .env or defaults to localhost:9092
-    bootstrap-servers: ${KAFKA_URL:localhost:9092}
+    bootstrap-servers: localhost:9092
 
+server:
+  port: 8081                          # App server port (default: 8081)
 
 app:
   jwtSecret: ${JWT_SECRET:your_at_least_32_character_long_secret_key_here}
