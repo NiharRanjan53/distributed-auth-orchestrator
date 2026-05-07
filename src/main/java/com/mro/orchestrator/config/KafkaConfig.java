@@ -51,7 +51,7 @@ public class KafkaConfig {
         props.put(JsonSerializer.ADD_TYPE_INFO_HEADERS, true);
 
         // Reliability settings
-        props.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, true);
+        props.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, true); // Ensures exactly-once delivery to the topic
         props.put(ProducerConfig.ACKS_CONFIG, "all");
         return new DefaultKafkaProducerFactory<>(props);
     }

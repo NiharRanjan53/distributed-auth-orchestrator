@@ -33,6 +33,8 @@ public class SecurityConfig {
 
                         // 3. Protect the rest
                         .anyRequest().authenticated())
+                // Tells Spring Security not to create or use an HTTPSession.
+                // Every request must provide its own credentials (the JWT token).
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .formLogin(form -> form.disable())
                 .httpBasic(basic -> basic.disable())

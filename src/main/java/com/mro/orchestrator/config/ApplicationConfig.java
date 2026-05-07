@@ -2,18 +2,16 @@ package com.mro.orchestrator.config;
 
 import com.mro.orchestrator.repositories.UserRepository;
 import com.mro.orchestrator.models.User;
+import com.mro.orchestrator.security.AuthenticatedUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-
-import java.util.stream.Collectors;
 
 @Configuration
 @RequiredArgsConstructor
@@ -33,14 +31,11 @@ public class ApplicationConfig {
             User user = userRepository.findByUsername(username)
                     .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
-            return org.springframework.security.core.userdetails.User.builder()
-                    .username(user.getUsername())
-                    .password(user.getPassword())
-                    .authorities(
-                            user.getRoles().stream()
-                                    .map(role -> new SimpleGrantedAuthority("ROLE_" + role.name()))
-                                    .collect(Collectors.toList()))
-                    .build();
+            return new AuthenticatedUser(
+                    user.getId(),
+                    user.getUsername(),
+                    user.getPassword(),
+                    user.getRoles());
         };
     }
 
