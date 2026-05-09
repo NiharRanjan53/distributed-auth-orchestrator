@@ -1,7 +1,7 @@
 package com.mro.orchestrator.controller;
 
 import com.mro.orchestrator.dto.FileUploadResponseDTO;
-import com.mro.orchestrator.service.DocumentUploadService;
+import com.mro.orchestrator.service.impl.DocumentUploadService;
 import com.mro.orchestrator.security.AuthenticatedUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

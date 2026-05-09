@@ -1,4 +1,4 @@
-package com.mro.orchestrator.service;
+package com.mro.orchestrator.service.impl;
 
 import com.mro.orchestrator.config.KafkaConfig;
 import com.mro.orchestrator.dto.FileUploadResponseDTO;
@@ -7,6 +7,8 @@ import com.mro.orchestrator.models.DocumentJob;
 import com.mro.orchestrator.models.DocumentMetadata;
 import com.mro.orchestrator.producers.KafkaEventProducer;
 import com.mro.orchestrator.repositories.DocumentJobRepository;
+import com.mro.orchestrator.service.IDocumentUploadService;
+import com.mro.orchestrator.service.S3Service;
 import com.mro.orchestrator.validation.ValidationEngine;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +25,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class DocumentUploadService {
+public class DocumentUploadService implements IDocumentUploadService {
 
     private final S3Service s3Service;
     private final DocumentJobRepository documentRepository;
