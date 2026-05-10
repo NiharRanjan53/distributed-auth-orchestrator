@@ -6,5 +6,5 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 
 public interface IDocumentUploadService {
-    FileUploadResponseDTO handleUpload(List<MultipartFile> files, Long userId);
+    FileUploadResponseDTO handleUpload(List<MultipartFile> files, Long userId, String jobId);
 }

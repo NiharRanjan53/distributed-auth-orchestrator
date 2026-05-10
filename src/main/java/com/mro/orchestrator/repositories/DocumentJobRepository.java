@@ -9,9 +9,7 @@ import java.util.Optional;
 
 @Repository
 public interface DocumentJobRepository extends JpaRepository<DocumentJob, String> {
-    // You can find a job by its UUID
-    Optional<DocumentJob> findByJobId(String jobId);
+    Optional<DocumentJob> findByUserIdAndIdempotencyKey(Long userId, String idempotencyKey);
 
-    // Custom query to find all jobs for a specific user (useful for the UI)
     List<DocumentJob> findByUserIdOrderByCreatedAtDesc(Long userId);
 }
