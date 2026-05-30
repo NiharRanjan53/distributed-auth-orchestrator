@@ -25,6 +25,10 @@ spring:
 server:
   port: 8081                          # App server port (default: 8081)
 
+logging:
+  level:
+    com.mro: INFO
+
 app:
   jwtSecret: ${JWT_SECRET:your_at_least_32_character_long_secret_key_here}
   jwtExpirationMs: ${JWT_EXPIRATION:86400000}
@@ -41,3 +45,4 @@ aws:
   region: ${AWS_REGION:ap-south-1}
   s3:
     bucket-name: ${S3_BUCKET:mro-orchestrator-documents}
+
