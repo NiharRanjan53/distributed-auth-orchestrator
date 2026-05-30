@@ -10,18 +10,17 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
 public class AuthController {
-    Logger log = LoggerFactory.getLogger(AuthController.class);
+    // Logger log = LoggerFactory.getLogger(AuthController.class);
     private final IAuthService authService;
 
     @PostMapping(value = "/register", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -44,9 +43,14 @@ public class AuthController {
 
 
     @PostMapping("/login")
-    @Operation(summary = "Login user", description = "Authenticates user and returns details")
     public ResponseEntity<AuthResponseDTO> login(@Valid @RequestBody LoginRequestDTO request) {
+
+        log.info("Login request received");
+
         AuthResponseDTO response = authService.loginUser(request);
+
+        log.info("Login successful");
+
         return ResponseEntity.ok(response);
     }
 
