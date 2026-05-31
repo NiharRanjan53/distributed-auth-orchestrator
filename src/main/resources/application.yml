@@ -25,11 +25,27 @@ spring:
 server:
   port: 8081                          # App server port (default: 8081)
 
-#logging:
-#  level:
-#    com.mro: INFO
-#  pattern:
-#    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level [%X{correlationId}] %logger{36} - %msg%n"
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+
+  tracing:
+    sampling:
+      probability: 1.0
+
+  otlp:
+    tracing:
+      endpoint: http://localhost:4318/v1/traces
+
+logging:
+  level:
+    root: INFO
+    com.mro: DEBUG
+
+
 
 app:
   jwtSecret: ${JWT_SECRET:your_at_least_32_character_long_secret_key_here}

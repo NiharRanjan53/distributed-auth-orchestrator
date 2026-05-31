@@ -45,15 +45,21 @@ public class DocumentUploadService implements IDocumentUploadService {
 
         try {
             // Attempt to acquire lock for 5 seconds, release after 10 seconds automatically
-            if (lock.tryLock(10, TimeUnit.SECONDS)) {
+            if (lock.tryLock(20, TimeUnit.SECONDS)) {
                 log.info("Lock acquired for key: {}. Go check Redis Insight now! Sleeping for 20s...", lockKey);
-                Thread.sleep(20000);
+                // Thread.sleep(20000);
                 // 2. Idempotency Check: Does this Job ID already exist in DB?
                 Optional<DocumentJob> existingJob = documentRepository.findByUserIdAndIdempotencyKey(userId,
                         idempotencyKey);
                 if (existingJob.isPresent()) {
                     return buildExistingResponse(existingJob.get());
                 }
+
+                log.info(
+                        "Document upload started. userId={}, idempotencyKey={}",
+                        userId,
+                        idempotencyKey
+                );
 
                 // 3. Normal Flow: Validation -> DB Save -> S3 -> Kafka
                 validationEngine.runAll(files);
@@ -67,6 +73,12 @@ public class DocumentUploadService implements IDocumentUploadService {
 
                 String jobId = job.getJobId();
 
+                log.info(
+                        "DocumentJob created. jobId={}, userId={}",
+                        jobId,
+                        userId
+                );
+
                 // Parallel S3 Upload
                 List<String> s3Paths = files.parallelStream()
                         .map(file -> {
@@ -75,7 +87,11 @@ public class DocumentUploadService implements IDocumentUploadService {
                         })
                         .collect(Collectors.toList());
 
-                log.info("Starting ingestion job: {} for user: {}", jobId, userId);
+                log.info(
+                        "Uploaded {} files to S3 for jobId={}",
+                        files.size(),
+                        jobId
+                );
 
                 // 4. Update Job and Attach Metadata
                 job.setStatus("RAW_INGESTED");
@@ -92,7 +108,11 @@ public class DocumentUploadService implements IDocumentUploadService {
                 }
 
                 documentRepository.save(job);
-
+                log.info(
+                        "Publishing ingestion event. jobId={}, fileCount={}",
+                        jobId,
+                        files.size()
+                );
                 // 5. Multi-Topic Kafka Integration
                 RawDocumentIngestedEvent ingestionEvent = RawDocumentIngestedEvent.builder()
                         .jobId(jobId)
